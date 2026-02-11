@@ -1,5 +1,9 @@
 from presidio_analyzer import AnalyzerEngine
+from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_anonymizer import AnonymizerEngine
+
+from .nlp_config import NLP_CONFIGURATION
+
 
 def load_nltk_data():
     import re
@@ -48,8 +52,12 @@ def load_nltk_data():
             "Version >= 3.8.2:\n import nltk\n nltk.download('punkt_tab')"
         ))
 
+
 load_nltk_data()
 
+provider = NlpEngineProvider(nlp_configuration=NLP_CONFIGURATION)
+nlp_engine = provider.create_engine()
+
 # Download models
-AnalyzerEngine()
+AnalyzerEngine(nlp_engine=nlp_engine, supported_languages=["fr"])
 AnonymizerEngine()

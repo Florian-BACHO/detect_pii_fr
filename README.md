@@ -10,7 +10,7 @@
 ## Description
 
 ### Intended Use
-This validator ensures that any given text does not contain PII. This validator uses Microsoft's Presidio (https://github.com/microsoft/presidio) to detect PII in the text. If PII is detected, the validator will fail with a programmatic fix that anonymizes the text. Otherwise, the validator will pass.
+This validator ensures that any given **french** text does not contain PII. This validator uses Microsoft's Presidio (https://github.com/microsoft/presidio) to detect PII in the text. If PII is detected, the validator will fail with a programmatic fix that anonymizes the text. Otherwise, the validator will pass.
 
 ### Requirements
 
@@ -22,7 +22,7 @@ This validator ensures that any given text does not contain PII. This validator 
 ## Installation
 
 ```bash
-$ guardrails hub install hub://guardrails/detect_pii
+$ guardrails hub install hub://guardrails/detect_pii_fr
 ```
 
 ## Usage Examples
@@ -40,10 +40,10 @@ guard = Guard().use(
     DetectPII, ["EMAIL_ADDRESS", "PHONE_NUMBER"], "exception"
 )
 
-guard.validate("Good morning!")  # Validator passes
+guard.validate("Bonjour!")  # Validator passes
 try:
     guard.validate(
-        "If interested, apply at not_a_real_email@guardrailsai.com"
+        "Si vous êtes intéressé, postulez à l’adresse suivante : not_a_real_email@guardrailsai.com"
     )  # Validator fails
 except Exception as e:
     print(e)
@@ -51,7 +51,7 @@ except Exception as e:
 Output:
 ```console
 Validation failed for field with errors: The following text in your response contains PII:
-If interested, apply at not_a_real_email@guardrailsai.com
+Si vous êtes intéressé, postulez à l’adresse suivante : not_a_real_email@guardrailsai.com
 ```
 
 ### Validating JSON output via Python
@@ -83,7 +83,7 @@ try:
         """
     {
         "name": "John Smith",
-        "last_msg": "My account isn't working. My username is not_a_real_email@guardrailsai.com"
+        "last_msg": "Mon compte ne fonctionne pas. Mon nom d’utilisateur est not_a_real_email@guardrailsai.com"
     }
     """
     )
@@ -93,7 +93,7 @@ except Exception as e:
 Output:
 ```console
 Validation failed for field with errors: The following text in your response contains PII:
-My account isn't working. My username is not_a_real_email@guardrailsai.com
+Mon compte ne fonctionne pas. Mon nom d’utilisateur est not_a_real_email@guardrailsai.com
 ```
 
 # API Reference

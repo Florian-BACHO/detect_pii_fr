@@ -12,7 +12,10 @@ from guardrails.validator_base import (
 )
 from guardrails.validator_base import ErrorSpan
 from presidio_analyzer import AnalyzerEngine
+from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_anonymizer import AnonymizerEngine
+
+from .nlp_config import NLP_CONFIGURATION
 
 
 @register_validator(name="guardrails/detect_pii", data_type="string", has_guardrails_endpoint=True)
@@ -100,7 +103,11 @@ class DetectPII(Validator):
         )
         self.pii_entities = pii_entities
         if self.use_local:
-            self.pii_analyzer = AnalyzerEngine()
+            provider = NlpEngineProvider(nlp_configuration=NLP_CONFIGURATION)
+            nlp_engine = provider.create_engine()
+
+            # Download models
+            self.pii_analyzer = AnalyzerEngine(nlp_engine=nlp_engine, supported_languages=["fr"])
             self.pii_anonymizer = AnonymizerEngine()
 
     def get_anonymized_text(self, text: str, entities: List[str]) -> str:
@@ -113,7 +120,7 @@ class DetectPII(Validator):
         Returns:
             anonymized_text (str): The anonymized text.
         """
-        results = self.pii_analyzer.analyze(text=text, entities=entities, language="en")
+        results = self.pii_analyzer.analyze(text=text, entities=entities, language="fr")
         results = cast(List[Any], results)
         anonymized_text = self.pii_anonymizer.anonymize(
             text=text, analyzer_results=results
@@ -193,7 +200,7 @@ class DetectPII(Validator):
         """Local inference method running the PII analyzer and anonymizer locally."""
 
         results = self.pii_analyzer.analyze(
-            text=model_input["text"], entities=model_input["entities"], language="en"
+            text=model_input["text"], entities=model_input["entities"], language="fr"
         )
         results = cast(List[Any], results)
         anonymized_text = self.pii_anonymizer.anonymize(
