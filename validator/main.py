@@ -15,10 +15,46 @@ from presidio_analyzer import AnalyzerEngine
 from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_anonymizer import AnonymizerEngine
 
-from .nlp_config import NLP_CONFIGURATION
+# Re-use default NLP Engine config with french model
+NLP_CONFIGURATION = {
+    "nlp_engine_name": "spacy",
+    "models": [{"lang_code": "fr", "model_name": "fr_core_news_md"}],
+    "ner_model_configuration": {
+        "model_to_presidio_entity_mapping": {
+            "PER": "PERSON",
+            "PERSON": "PERSON",
+            "NORP": "NRP",
+            "FAC": "LOCATION",
+            "LOC": "LOCATION",
+            "GPE": "LOCATION",
+            "LOCATION": "LOCATION",
+            "ORG": "ORGANIZATION",
+            "ORGANIZATION": "ORGANIZATION",
+            "DATE": "DATE_TIME",
+            "TIME": "DATE_TIME",
+        },
+        "low_confidence_score_multiplier": 0.4,
+        "low_score_entity_names": [],
+        "labels_to_ignore": [
+            "ORGANIZATION",
+            "CARDINAL",
+            "EVENT",
+            "LANGUAGE",
+            "LAW",
+            "MONEY",
+            "ORDINAL",
+            "PERCENT",
+            "PRODUCT",
+            "QUANTITY",
+            "WORK_OF_ART",
+        ],
+    },
+}
 
 
-@register_validator(name="guardrails/detect_pii", data_type="string", has_guardrails_endpoint=True)
+@register_validator(
+    name="guardrails/detect_pii", data_type="string", has_guardrails_endpoint=True
+)
 class DetectPII(Validator):
     """Validates that any text does not contain any PII.
 
@@ -97,8 +133,8 @@ class DetectPII(Validator):
         **kwargs,
     ):
         super().__init__(
-            on_fail, 
-            pii_entities=pii_entities, 
+            on_fail,
+            pii_entities=pii_entities,
             **kwargs,
         )
         self.pii_entities = pii_entities
@@ -107,7 +143,9 @@ class DetectPII(Validator):
             nlp_engine = provider.create_engine()
 
             # Download models
-            self.pii_analyzer = AnalyzerEngine(nlp_engine=nlp_engine, supported_languages=["fr"])
+            self.pii_analyzer = AnalyzerEngine(
+                nlp_engine=nlp_engine, supported_languages=["fr"]
+            )
             self.pii_anonymizer = AnonymizerEngine()
 
     def get_anonymized_text(self, text: str, entities: List[str]) -> str:
@@ -149,7 +187,7 @@ class DetectPII(Validator):
             entities_to_filter = pii_entities
         else:
             raise ValueError(
-                f"`pii_entities` must be one of {pii_keys}" " or a list of strings."
+                f"`pii_entities` must be one of {pii_keys} or a list of strings."
             )
 
         # Analyze the text, and anonymize it if there is PII
@@ -183,17 +221,16 @@ class DetectPII(Validator):
                 ErrorSpan(
                     start=diff_range[0],
                     end=diff_range[1],
-                    reason=f"PII detected in {value[diff_range[0]:diff_range[1]]}",
+                    reason=f"PII detected in {value[diff_range[0] : diff_range[1]]}",
                 )
             )
 
         # If anonymized value text is different from original value, then there is PII
-        error_msg=f"The following text in your response contains PII:\n{value}"
+        error_msg = f"The following text in your response contains PII:\n{value}"
         return FailResult(
-            error_message=(error_msg
-            ),
+            error_message=(error_msg),
             fix_value=anonymized_text,
-            error_spans=error_spans
+            error_spans=error_spans,
         )
 
     def _inference_local(self, model_input: Any) -> Any:
@@ -216,15 +253,17 @@ class DetectPII(Validator):
                     "name": "text",
                     "shape": [1],
                     "data": [model_input["text"]],
-                    "datatype": "BYTES"
+                    "datatype": "BYTES",
                 },
                 {
                     "name": "pii_entities",
                     "shape": [len(model_input["entities"])],
                     "data": model_input["entities"],
-                    "datatype": "BYTES"
-                }
+                    "datatype": "BYTES",
+                },
             ]
         }
-        response = self._hub_inference_request(json.dumps(request_body), self.validation_endpoint)  # type: ignore
+        response = self._hub_inference_request(
+            json.dumps(request_body), str(self.validation_endpoint)
+        )  # type: ignore
         return response["outputs"][0]["data"][0]

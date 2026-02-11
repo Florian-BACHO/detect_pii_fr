@@ -1,7 +1,7 @@
 # Inferless config file (version: 1.0.0)
 version: 1.0.0
 
-name: DETECT_PII
+name: DETECT_PII_FR
 import_source: LOCAL
 
 # you can choose the options between ONNX, TENSORFLOW, PYTORCH

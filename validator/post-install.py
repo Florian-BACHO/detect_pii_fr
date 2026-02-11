@@ -2,7 +2,41 @@ from presidio_analyzer import AnalyzerEngine
 from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_anonymizer import AnonymizerEngine
 
-from .nlp_config import NLP_CONFIGURATION
+# Re-use default NLP Engine config with french model
+NLP_CONFIGURATION = {
+    "nlp_engine_name": "spacy",
+    "models": [{"lang_code": "fr", "model_name": "fr_core_news_md"}],
+    "ner_model_configuration": {
+        "model_to_presidio_entity_mapping": {
+            "PER": "PERSON",
+            "PERSON": "PERSON",
+            "NORP": "NRP",
+            "FAC": "LOCATION",
+            "LOC": "LOCATION",
+            "GPE": "LOCATION",
+            "LOCATION": "LOCATION",
+            "ORG": "ORGANIZATION",
+            "ORGANIZATION": "ORGANIZATION",
+            "DATE": "DATE_TIME",
+            "TIME": "DATE_TIME",
+        },
+        "low_confidence_score_multiplier": 0.4,
+        "low_score_entity_names": [],
+        "labels_to_ignore": [
+            "ORGANIZATION",
+            "CARDINAL",
+            "EVENT",
+            "LANGUAGE",
+            "LAW",
+            "MONEY",
+            "ORDINAL",
+            "PERCENT",
+            "PRODUCT",
+            "QUANTITY",
+            "WORK_OF_ART",
+        ],
+    },
+}
 
 
 def load_nltk_data():
@@ -11,15 +45,20 @@ def load_nltk_data():
     from importlib.metadata import version
 
     nltk_version = version("nltk")
-    nltk_breaking_version = "3.8.2" # The version where the dataset changed
+    nltk_breaking_version = "3.8.2"  # The version where the dataset changed
 
     def parse_major_minor_patch(version: str):
         """Extract the major, minor, and patch version numbers from a version string."""
-        match = re.match(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)(?:\.(0|[1-9]\d*))?(?:[-+][0-9A-Za-z-.]+)?$", version)
+        match = re.match(
+            r"^(0|[1-9]\d*)\.(0|[1-9]\d*)(?:\.(0|[1-9]\d*))?(?:[-+][0-9A-Za-z-.]+)?$",
+            version,
+        )
         if match:
             major = int(match.group(1))
             minor = int(match.group(2))
-            patch = int(match.group(3)) if match.group(3) else 0  # Default to 0 if patch is not provided
+            patch = (
+                int(match.group(3)) if match.group(3) else 0
+            )  # Default to 0 if patch is not provided
             return major, minor, patch
         else:
             raise ValueError(f"Invalid semantic version: '{version}'")
@@ -29,7 +68,7 @@ def load_nltk_data():
             nltk.data.find("tokenizers/punkt")
         except LookupError:
             nltk.download("punkt")
-        
+
     def install_post_382_dataset():
         try:
             nltk.data.find("tokenizers/punkt_tab")
@@ -37,7 +76,9 @@ def load_nltk_data():
             nltk.download("punkt_tab")
 
     try:
-        target_major, target_minor, target_patch = parse_major_minor_patch(nltk_breaking_version)
+        target_major, target_minor, target_patch = parse_major_minor_patch(
+            nltk_breaking_version
+        )
         major, minor, patch = parse_major_minor_patch(nltk_version)
 
         if (major, minor, patch) >= (target_major, target_minor, target_patch):
@@ -45,12 +86,14 @@ def load_nltk_data():
         elif (major, minor, patch) < (target_major, target_minor, target_patch):
             install_pre_382_dataset()
     except Exception:
-        print((
-            "Error auto-installing nltk dataset, please install manually.\n"
-            "This can be done with:\n",
-            "Version < 3.8.2:\n import nltk\n nltk.download('punkt')",
-            "Version >= 3.8.2:\n import nltk\n nltk.download('punkt_tab')"
-        ))
+        print(
+            (
+                "Error auto-installing nltk dataset, please install manually.\n"
+                "This can be done with:\n",
+                "Version < 3.8.2:\n import nltk\n nltk.download('punkt')",
+                "Version >= 3.8.2:\n import nltk\n nltk.download('punkt_tab')",
+            )
+        )
 
 
 load_nltk_data()

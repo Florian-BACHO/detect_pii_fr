@@ -4,7 +4,10 @@ from guardrails import Guard
 
 # Setup Guard with DetectPII validator
 guard = Guard().use(
-    DetectPII, ["EMAIL_ADDRESS", "PHONE_NUMBER"], "exception", use_local=True,
+    DetectPII,
+    ["EMAIL_ADDRESS", "PHONE_NUMBER"],
+    "exception",
+    use_local=True,
 )
 
 
@@ -27,7 +30,10 @@ def test_pii_fail():
 
 # Setup Guard with DetectPII validator
 guard_name = Guard().use(
-    DetectPII, ["PERSON"], "exception", use_local=True,
+    DetectPII,
+    ["PERSON"],
+    "exception",
+    use_local=True,
 )
 
 
@@ -40,9 +46,7 @@ def test_pii_no_name():
 # Test passing response (contains a name)
 def test_pii_fail_name():
     with pytest.raises(Exception) as e:
-        guard_name.validate(
-            "Mon nom est Paul Richard et j'adore la randonnée!"
-        )
+        guard_name.validate("Mon nom est Paul Richard et j'adore la randonnée!")
 
     print(e)
     assert "Validation failed for field with errors:" in str(e.value)
